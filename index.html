@@ -2,137 +2,199 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Temporizador Fitness 3 Rondas</title>
+<title>Timer Gym LoL</title>
+
 <style>
-  body {
-    font-family: 'Arial', sans-serif;
-    background: #111;
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    margin: 0;
-  }
-  #phase {
-    font-size: 2rem;
-    margin-bottom: 20px;
-    color: #f39c12;
-  }
-  #round {
-    font-size: 1.5rem;
-    margin-bottom: 10px;
-    color: #2ecc71;
-  }
-  #timer {
-    font-size: 6rem;
-    font-weight: bold;
-    margin-bottom: 30px;
-  }
-  #champion {
-    display: none;
-    width: 300px;
-    height: auto;
-    margin-top: 20px;
-    animation: roar 1s ease-in-out;
-  }
-  @keyframes roar {
-    0% { transform: scale(0.5); opacity: 0; }
-    50% { transform: scale(1.2); opacity: 1; }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  button {
-    font-size: 1.5rem;
-    padding: 10px 20px;
-    cursor: pointer;
-    border: none;
-    border-radius: 10px;
-    background-color: #3498db;
-    color: white;
-  }
-  button:hover {
-    background-color: #2980b9;
-  }
+
+body{
+margin:0;
+background:#000;
+color:white;
+font-family:Arial, Helvetica, sans-serif;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+flex-direction:column;
+overflow:hidden;
+}
+
+/* FONDOS */
+
+.bg{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background-size:cover;
+background-position:center;
+z-index:-1;
+opacity:0.35;
+}
+
+/* TEXTO */
+
+#fase{
+font-size:5vw;
+margin-bottom:10px;
+}
+
+#timer{
+font-size:18vw;
+font-weight:bold;
+}
+
+/* BOTON */
+
+button{
+margin-top:40px;
+font-size:2vw;
+padding:15px 40px;
+border:none;
+border-radius:10px;
+background:#ff4444;
+color:white;
+cursor:pointer;
+}
+
+button:hover{
+background:#ff2222;
+}
+
+.work{
+color:#ff3b3b;
+}
+
+.rest{
+color:#4ecbff;
+}
+
 </style>
 </head>
+
 <body>
 
-<div id="round">Ronda 1 / 3</div>
-<div id="phase">Trabajo</div>
-<div id="timer">01:00</div>
-<img id="champion" src="https://static.wikia.nocookie.net/leagueoflegends/images/f/f3/Warwick_OriginalSkin_Roar.gif" alt="Campeón rugiendo">
+<div id="gifTrabajo" class="bg"></div>
+<div id="gifDescanso" class="bg" style="display:none;"></div>
 
-<button onclick="startTimer()">Iniciar Temporizador</button>
+<div id="fase" class="work">TRABAJO</div>
+<div id="timer">01:00</div>
+
+<button onclick="iniciar()">INICIAR</button>
+
+<!-- SONIDOS -->
+
+<audio id="rengarSound" src="rengar.mp3"></audio>
+<audio id="tahmSound" src="tahmkench.mp3"></audio>
 
 <script>
-let workTime = 60; // segundos
-let restTime = 30; // segundos
-let totalRounds = 3;
 
-let timer;
-let isWork = true;
-let timeLeft = workTime;
-let currentRound = 1;
+let trabajo = 60;
+let descanso = 30;
 
-const timerDisplay = document.getElementById('timer');
-const phaseDisplay = document.getElementById('phase');
-const roundDisplay = document.getElementById('round');
-const championImg = document.getElementById('champion');
+let tiempo = trabajo;
+let trabajando = true;
+let intervalo;
 
-function updateTimer() {
-  let minutes = Math.floor(timeLeft / 60);
-  let seconds = timeLeft % 60;
-  timerDisplay.textContent = `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+const timer = document.getElementById("timer");
+const fase = document.getElementById("fase");
+
+const gifTrabajo = document.getElementById("gifTrabajo");
+const gifDescanso = document.getElementById("gifDescanso");
+
+const rengarSound = document.getElementById("rengarSound");
+const tahmSound = document.getElementById("tahmSound");
+
+/* FONDOS */
+
+gifTrabajo.style.backgroundImage = "url('rengar.gif')";
+gifDescanso.style.backgroundImage = "url('tahmkench.gif')";
+
+function formatear(t){
+let m = Math.floor(t/60);
+let s = t%60;
+return String(m).padStart(2,'0') + ":" + String(s).padStart(2,'0');
 }
 
-function switchPhase() {
-  // Mostrar animación de campeón
-  championImg.style.display = 'block';
-  setTimeout(() => { championImg.style.display = 'none'; }, 1500);
+function beep(){
 
-  if (isWork) {
-    isWork = false;
-    timeLeft = restTime;
-    phaseDisplay.textContent = 'Descanso';
-  } else {
-    if (currentRound < totalRounds) {
-      currentRound++;
-      roundDisplay.textContent = `Ronda ${currentRound} / ${totalRounds}`;
-      isWork = true;
-      timeLeft = workTime;
-      phaseDisplay.textContent = 'Trabajo';
-    } else {
-      // fin de las 3 rondas
-      clearInterval(timer);
-      phaseDisplay.textContent = '¡Entrenamiento completado!';
-      timerDisplay.textContent = '00:00';
-      return;
-    }
-  }
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+const osc = ctx.createOscillator();
+const gain = ctx.createGain();
+
+osc.connect(gain);
+gain.connect(ctx.destination);
+
+osc.frequency.value = 900;
+
+osc.start();
+
+gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.2);
+
 }
 
-function tick() {
-  if (timeLeft > 0) {
-    timeLeft--;
-    updateTimer();
-  } else {
-    switchPhase();
-    updateTimer();
-  }
+function iniciar(){
+
+clearInterval(intervalo);
+
+/* RUGIDO AL EMPEZAR */
+
+rengarSound.currentTime = 0;
+rengarSound.play();
+
+intervalo = setInterval(()=>{
+
+tiempo--;
+
+if(tiempo<=3 && tiempo>0){
+beep();
 }
 
-function startTimer() {
-  clearInterval(timer);
-  isWork = true;
-  currentRound = 1;
-  timeLeft = workTime;
-  roundDisplay.textContent = `Ronda ${currentRound} / ${totalRounds}`;
-  phaseDisplay.textContent = 'Trabajo';
-  updateTimer();
-  timer = setInterval(tick, 1000);
+if(tiempo<=0){
+
+if(trabajando){
+
+trabajando=false;
+tiempo=descanso;
+
+fase.textContent="DESCANSO";
+fase.className="rest";
+
+/* VOZ DE TAHM KENCH */
+
+tahmSound.currentTime = 0;
+tahmSound.play();
+
+gifTrabajo.style.display="none";
+gifDescanso.style.display="block";
+
+}else{
+
+trabajando=true;
+tiempo=trabajo;
+
+fase.textContent="TRABAJO";
+fase.className="work";
+
+/* RUGIDO DE RENGAR */
+
+rengarSound.currentTime = 0;
+rengarSound.play();
+
+gifTrabajo.style.display="block";
+gifDescanso.style.display="none";
+
 }
+
+}
+
+timer.textContent = formatear(tiempo);
+
+},1000);
+
+}
+
 </script>
 
 </body>
