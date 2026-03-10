@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Temporizador Fitness 3 Rondas</title>
+<style>
+  body {
+    font-family: 'Arial', sans-serif;
+    background: #111;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+  }
+  #phase {
+    font-size: 2rem;
+    margin-bottom: 20px;
+    color: #f39c12;
+  }
+  #round {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: #2ecc71;
+  }
+  #timer {
+    font-size: 6rem;
+    font-weight: bold;
+    margin-bottom: 30px;
+  }
+  #champion {
+    display: none;
+    width: 300px;
+    height: auto;
+    margin-top: 20px;
+    animation: roar 1s ease-in-out;
+  }
+  @keyframes roar {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  button {
+    font-size: 1.5rem;
+    padding: 10px 20px;
+    cursor: pointer;
+    border: none;
+    border-radius: 10px;
+    background-color: #3498db;
+    color: white;
+  }
+  button:hover {
+    background-color: #2980b9;
+  }
+</style>
+</head>
+<body>
+
+<div id="round">Ronda 1 / 3</div>
+<div id="phase">Trabajo</div>
+<div id="timer">01:00</div>
+<img id="champion" src="https://static.wikia.nocookie.net/leagueoflegends/images/f/f3/Warwick_OriginalSkin_Roar.gif" alt="Campeón rugiendo">
+
+<button onclick="startTimer()">Iniciar Temporizador</button>
+
+<script>
+let workTime = 60; // segundos
+let restTime = 30; // segundos
+let totalRounds = 3;
+
+let timer;
+let isWork = true;
+let timeLeft = workTime;
+let currentRound = 1;
+
+const timerDisplay = document.getElementById('timer');
+const phaseDisplay = document.getElementById('phase');
+const roundDisplay = document.getElementById('round');
+const championImg = document.getElementById('champion');
+
+function updateTimer() {
+  let minutes = Math.floor(timeLeft / 60);
+  let seconds = timeLeft % 60;
+  timerDisplay.textContent = `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+}
+
+function switchPhase() {
+  // Mostrar animación de campeón
+  championImg.style.display = 'block';
+  setTimeout(() => { championImg.style.display = 'none'; }, 1500);
+
+  if (isWork) {
+    isWork = false;
+    timeLeft = restTime;
+    phaseDisplay.textContent = 'Descanso';
+  } else {
+    if (currentRound < totalRounds) {
+      currentRound++;
+      roundDisplay.textContent = `Ronda ${currentRound} / ${totalRounds}`;
+      isWork = true;
+      timeLeft = workTime;
+      phaseDisplay.textContent = 'Trabajo';
+    } else {
+      // fin de las 3 rondas
+      clearInterval(timer);
+      phaseDisplay.textContent = '¡Entrenamiento completado!';
+      timerDisplay.textContent = '00:00';
+      return;
+    }
+  }
+}
+
+function tick() {
+  if (timeLeft > 0) {
+    timeLeft--;
+    updateTimer();
+  } else {
+    switchPhase();
+    updateTimer();
+  }
+}
+
+function startTimer() {
+  clearInterval(timer);
+  isWork = true;
+  currentRound = 1;
+  timeLeft = workTime;
+  roundDisplay.textContent = `Ronda ${currentRound} / ${totalRounds}`;
+  phaseDisplay.textContent = 'Trabajo';
+  updateTimer();
+  timer = setInterval(tick, 1000);
+}
+</script>
+
+</body>
+</html>
